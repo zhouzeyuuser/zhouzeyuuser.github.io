@@ -27,7 +27,7 @@
 <meta property="og:site_name" content="小Z的博客">
 <meta property="og:description" content="前端跨平台app开发利器RN,下面介绍下使用过程中团队遇到的坑和比较好的技术实现点">
 <meta property="article:published_time" content="2020-04-29T03:27:46.436Z">
-<meta property="article:modified_time" content="2020-05-01T06:36:38.363Z">
+<meta property="article:modified_time" content="2020-05-02T02:01:12.566Z">
 <meta property="article:author" content="小Z">
 <meta name="twitter:card" content="summary">
 
@@ -210,7 +210,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-01 14:36:38" itemprop="dateModified" datetime="2020-05-01T14:36:38+08:00">2020-05-01</time>
+                <time title="Modified: 2020-05-02 10:01:12" itemprop="dateModified" datetime="2020-05-02T10:01:12+08:00">2020-05-02</time>
               </span>
 
           
@@ -255,11 +255,55 @@
 </li>
 </ol>
 <h3 id="常规问题"><a href="#常规问题" class="headerlink" title="常规问题"></a>常规问题</h3><ol>
-<li>在Android上使用zIndex来控制组件的层级，会遇到元素不显示的问题。<br>解决方案：尽量改变组件的顺序，而不用zIndex尽量不要使用zIndex来控制组件的层级，默认情况下，使用position:‘absolute’后，后面的元素会默认覆盖在前面的元素之上。所以删除zIndex，改变一下组件的顺序就OK啦。issues:<a href="https://github.com/facebook/react-native/issues/8968" target="_blank" rel="noopener">https://github.com/facebook/react-native/issues/8968</a></li>
-<li>borderStyle:’dashed’<ol>
+<li><p>在Android上使用zIndex来控制组件的层级，会遇到元素不显示的问题。<br>解决方案：尽量改变组件的顺序，而不用zIndex尽量不要使用zIndex来控制组件的层级，默认情况下，使用position:‘absolute’后，后面的元素会默认覆盖在前面的元素之上。所以删除zIndex，改变一下组件的顺序就OK啦。issues:<a href="https://github.com/facebook/react-native/issues/8968" target="_blank" rel="noopener">https://github.com/facebook/react-native/issues/8968</a></p>
+</li>
+<li><p>borderStyle:’dashed’</p>
+<ol>
 <li>目前，Android上，如果想要实现一条水平方向的虚线，一开始想到的肯定是:<code>border:{borderColor:‘red’,borderWidth:0,borderBottomWidth:1,borderStyle:‘dashed’}</code>但是实际上，这样是不会生效的，目前Android还不支持某一边设置虚线。解决方案：</li>
 <li>方案一：假设我们想要一个线宽为h的水平虚线，设置一个高度为h的view，里面给一个view设置四边都是dashed的边框，borderWidth为h，高度为0，然后外层设置overflow:‘hidden’但是，你会发现，不管你怎么overflow，都是没用的，Android照样会渲染出两个边框，看起来overflow也没有起作用。</li>
 <li>方案二：换一种思路，再弄一个view，高度为h，背景颜色设置成你想要的颜色，然后把下面的border覆盖掉。此外，也可以关注下这个issue：<code>BorderisinvisiblewhenusingborderStyle=’dashed’withborderBottom#7838</code></li>
+</ol>
+</li>
+<li><p>TextInput问题</p>
+<ol>
+<li>TextInput在安卓上默认有一个底边框，同时会有一些padding。如果要想使其看起来和iOS上尽量一致，则需要设置padding:0，同时设置underlineColorAndroid=”transparent”来去掉底边框。</li>
+</ol>
+</li>
+<li><p>RN中组件阴影解决方案</p>
+<ol>
+<li>对于IOS系统，RN支持通过style设置阴影，但是Android系统的阴影却很奇葩，以下是类似解决方案。<ol>
+<li>在ios中直接加上<code>container:{shadowColor:‘#000’,shadowOffset:{width:0,height:2},shadowRadius:2,shadowOpacity:0.2}</code>这样的shadow全套就完事。</li>
+</ol>
+</li>
+<li>在安卓中目前最普遍的是使用使用elevation属性，添加组件的ImageBackground属性，第三方插件（类似于react-native-shadow），以及神奇的安卓点九图。<ol>
+<li>elevation直接在css中添加属性即可，这里可能需要主要到elevation可能会存在的层级问题，因为rn中调用的相当于原生的<a href="https://developer.android.com/training/material/shadows-clipping.html#Elevation" target="_blank" rel="noopener">elevation api</a>。<ol>
+<li>既没有ZIndex属性，又没有elevation 属性时，在z轴的层叠关系由其摆放位置决定的，放在下面的组件会在上层</li>
+<li>两个组件只有zIndex没有elevation属性时，zIndex大的在上层</li>
+<li>两个组件有elevation属性时，elevation大的在上层</li>
+<li>两个组件既有zIndex属性elevation属性时，以elevation为准</li>
+<li>然而在ios中，同层级的组件，z轴的层叠关系只与摆放顺序与zIndex有关，与elevation无关</li>
+</ol>
+</li>
+<li>ImageBackground属性。<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">ImageBackground</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">Text</span>&gt;</span>内容<span class="tag">&lt;/<span class="name">Text</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">ImageBackground</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
+<li>至于插件，直接可以看git上官方的说明就行，简单方便，只需要注意下版本的对称，github：<a href="https://github.com/879479119/react-native-shadow" target="_blank" rel="noopener">https://github.com/879479119/react-native-shadow</a></li>
+<li>做图片背景的时候可能会存在图片拉伸变形的情况，然而安卓又有一个神奇的点九图，这个概念就不多说<a href="https://baike.baidu.com/item/%E7%82%B9%E4%B9%9D/2406739?fr=aladdin" target="_blank" rel="noopener">点九图</a>,业务之中如果有需要就需要对源码进行相应的改写，盖好方法的链接也放在这儿了<a href="https://blog.csdn.net/yeputi1015/article/details/85078938" target="_blank" rel="noopener">rn做点九图</a></li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>验证带小数点的数字键盘,其实网上随笔搜到的正则以及完全ok，但是也会有一些问题，做法就是在onChange的时候匹配正则进行修改相应的state就行。</p>
+ <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">chkPrice(obj)&#123;<span class="comment">//方法1</span></span><br><span class="line">obj=obj.replace(<span class="regexp">/[^\d.]/g</span>,<span class="string">""</span>);<span class="comment">//必须保证第一位为数字而不是.</span></span><br><span class="line">obj=obj.replace(<span class="regexp">/^\./g</span>,<span class="string">""</span>);<span class="comment">//保证只有出现一个.而没有多个.</span></span><br><span class="line">obj=obj.replace(<span class="regexp">/\.&#123;2,&#125;/g</span>,<span class="string">"."</span>);<span class="comment">//保证.只出现一次，而不能出现两次以上</span></span><br><span class="line">obj=obj.replace(<span class="string">"."</span>,<span class="string">"$#$"</span>).replace(<span class="regexp">/\./g</span>,<span class="string">""</span>).replace(<span class="string">"$#$"</span>,<span class="string">"."</span>);</span><br><span class="line"><span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="真机调试"><a href="#真机调试" class="headerlink" title="真机调试"></a>真机调试</h3><ol>
+<li>adbreversetcp:8081tcp:8081命令连接真机访问电脑端口服务</li>
+<li>确保你的设备已经成功连接。可以终端输入adbdevices来查看 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$adb</span> devices </span><br><span class="line"><span class="variable">$List</span> of devices attached</span><br><span class="line">“YourdeviceName”device</span><br></pre></td></tr></table></figure></li>
+<li>首先确保你的电脑和手机设备在同一个Wi-Fi环境下</li>
+<li>在设备上运行你的ReactNative应用。和打开其它App一样操作</li>
+<li>你应该会看到一个“红屏”错误提示。这是正常的，下面的步骤会解决这个报错</li>
+<li>摇晃设备，或者运行adbshellinputkeyevent82，可以打开开发者菜单</li>
+<li>点击进入Dev Settings</li>
+<li>点击Debug server host for device</li>
+<li>输入你电脑的IP地址和端口号（电脑网络IP:8081）。查看电脑IP这里就不用多说啦</li>
+<li>回到开发者菜单然后选择Reload Js</li>
 </ol>
 </li>
 </ol>
@@ -343,7 +387,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#go-go-go"><span class="nav-number">1.</span> <span class="nav-text">go go go</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用echarts集成到RN的问题"><span class="nav-number">1.1.</span> <span class="nav-text">使用echarts集成到RN的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#webView的问题"><span class="nav-number">1.2.</span> <span class="nav-text">webView的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#常规问题"><span class="nav-number">1.3.</span> <span class="nav-text">常规问题</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#go-go-go"><span class="nav-number">1.</span> <span class="nav-text">go go go</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用echarts集成到RN的问题"><span class="nav-number">1.1.</span> <span class="nav-text">使用echarts集成到RN的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#webView的问题"><span class="nav-number">1.2.</span> <span class="nav-text">webView的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#常规问题"><span class="nav-number">1.3.</span> <span class="nav-text">常规问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真机调试"><span class="nav-number">1.4.</span> <span class="nav-text">真机调试</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
